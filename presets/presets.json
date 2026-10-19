@@ -1,0 +1,72 @@
+[
+  {
+    "id": "steve",
+    "name": "Steve (Classic)",
+    "description": "The classic default look: cyan shirt, blue jeans, brown hair.",
+    "layout": "64x64",
+    "file": "steve.png"
+  },
+  {
+    "id": "alex",
+    "name": "Alex (Light)",
+    "description": "Lighter skin tone, green shirt, brown pants, ginger hair.",
+    "layout": "64x64",
+    "file": "alex.png"
+  },
+  {
+    "id": "explorer",
+    "name": "Explorer",
+    "description": "Rugged tan outfit with dark boots - a neutral adventurer base.",
+    "layout": "64x64",
+    "file": "explorer.png"
+  },
+  {
+    "id": "hero-red",
+    "name": "Hero (Red)",
+    "description": "Bold red-and-grey suit - a clean superhero starting point.",
+    "layout": "64x64",
+    "file": "hero-red.png"
+  },
+  {
+    "id": "blank-skin",
+    "name": "Blank (Skin Tone)",
+    "description": "Solid skin-tone body with no clothes - paint your own outfit.",
+    "layout": "64x64",
+    "file": "blank-skin.png"
+  },
+  {
+    "id": "blank-white",
+    "name": "Blank (White)",
+    "description": "Solid white template - maximum contrast for designing.",
+    "layout": "64x64",
+    "file": "blank-white.png"
+  },
+  {
+    "id": "checker",
+    "name": "Checkerboard",
+    "description": "Two-tone checker template - handy for spotting UV regions.",
+    "layout": "64x64",
+    "file": "checker.png"
+  },
+  {
+    "id": "overalls",
+    "name": "Denim Overalls",
+    "description": "Farmer in denim overalls - uses every area incl. hat, bib jacket, sleeve cuffs and pant overlays.",
+    "layout": "64x64",
+    "file": "overalls.png"
+  },
+  {
+    "id": "hoodie",
+    "name": "Hoodie",
+    "description": "Hooded sweatshirt with jeans - full base + overlay coverage (hood, cuffs, zipper, cuffed jeans).",
+    "layout": "64x64",
+    "file": "hoodie.png"
+  },
+  {
+    "id": "robot",
+    "name": "Mech Robot",
+    "description": "Armored mech that paints every base and overlay face - a full-coverage reference skin.",
+    "layout": "64x64",
+    "file": "robot.png"
+  }
+]

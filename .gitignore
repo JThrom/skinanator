@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+server.log
+skins/*.png
+!skins/.gitkeep
+catalog/*.png
+catalog/catalog.json
+!catalog/.gitkeep

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Skinanator - Bedrock Skin Editor</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+  <header>
+    <h1>Skinanator</h1>
+    <span class="tag">Minecraft Bedrock skin editor</span>
+  </header>
+
+  <div class="app">
+    <!-- Left: tools -->
+    <aside class="panel tools">
+      <h2>Layout</h2>
+      <select id="layout">
+        <option value="64x64">64 x 64 (modern)</option>
+        <option value="64x32">64 x 32 (legacy)</option>
+      </select>
+
+      <h2>Tools</h2>
+      <div class="tool-grid">
+        <button class="tool active" data-tool="pencil" title="Pencil (B)">Pencil</button>
+        <button class="tool" data-tool="eraser" title="Eraser (E)">Eraser</button>
+        <button class="tool" data-tool="fill" title="Fill (G)">Fill</button>
+        <button class="tool" data-tool="picker" title="Eyedropper (I)">Picker</button>
+      </div>
+
+      <h2>Color</h2>
+      <input type="color" id="color" value="#8b5a2b" />
+      <div class="swatches" id="swatches"></div>
+      <label class="row">
+        <input type="checkbox" id="mirror" />
+        <span>Mirror X (paint both sides)</span>
+      </label>
+
+      <h2>View</h2>
+      <label class="row">
+        <input type="checkbox" id="guides" checked />
+        <span>Show UV guides</span>
+      </label>
+      <label class="row">
+        <input type="checkbox" id="labels" checked />
+        <span>Show part labels</span>
+      </label>
+      <label class="row">
+        <span>Zoom</span>
+        <input type="range" id="zoom" min="4" max="24" value="12" />
+      </label>
+
+      <h2>Canvas</h2>
+      <div class="tool-grid">
+        <button id="clear">Clear</button>
+        <button id="fillBase">Fill Base</button>
+      </div>
+    </aside>
+
+    <!-- Center: canvas -->
+    <main class="canvas-wrap">
+      <div class="canvas-stack" id="stack">
+        <canvas id="skin"></canvas>
+        <canvas id="overlay"></canvas>
+      </div>
+      <p id="hover" class="hover">&nbsp;</p>
+    </main>
+
+    <!-- Right: IO -->
+    <aside class="panel io">
+      <h2>File</h2>
+      <label class="row">
+        <span>Name</span>
+        <input type="text" id="name" value="myskin" />
+      </label>
+      <button id="export" class="primary">Export &amp; Download PNG</button>
+      <button id="saveCatalog">Save to Catalog</button>
+      <label class="filebtn">
+        Import PNG
+        <input type="file" id="import" accept="image/png" hidden />
+      </label>
+      <div id="status" class="status"></div>
+
+      <h2>3D Preview</h2>
+      <p class="hint">Drag to rotate. Includes overlay layers.</p>
+      <canvas id="preview" width="220" height="300"></canvas>
+      <label class="row">
+        <input type="checkbox" id="autoRotate" checked />
+        <span>Auto-rotate</span>
+      </label>
+      <label class="row">
+        <input type="checkbox" id="showOverlay3d" checked />
+        <span>Show overlay layers</span>
+      </label>
+
+      <h2>Bedrock how-to</h2>
+      <ol class="hint">
+        <li>Export the PNG.</li>
+        <li>In Minecraft Bedrock: <b>Dressing Room &rarr; Skins &rarr; Owned &rarr; Import</b>.</li>
+        <li>Select the exported file, pick classic/slim, confirm.</li>
+      </ol>
+    </aside>
+  </div>
+
+  <!-- Catalog: examples + saved custom skins -->
+  <section class="catalog panel">
+    <div class="catalog-head">
+      <h2>Skin Catalog</h2>
+      <div class="catalog-filters">
+        <button class="filter active" data-filter="all">All</button>
+        <button class="filter" data-filter="preset">Examples</button>
+        <button class="filter" data-filter="custom">My Skins</button>
+        <button id="refreshCatalog" title="Reload catalog">Refresh</button>
+      </div>
+    </div>
+    <p class="hint">
+      Click a skin to load it into the editor as a starting point. Examples are
+      read-only; your saved skins can be loaded, edited and re-saved or deleted.
+    </p>
+    <div id="catalogGrid" class="catalog-grid"></div>
+  </section>
+
+  <script src="{{ url_for('static', filename='uvmap.js') }}"></script>
+  <script src="{{ url_for('static', filename='preview3d.js') }}"></script>
+  <script src="{{ url_for('static', filename='editor.js') }}"></script>
+</body>
+</html>

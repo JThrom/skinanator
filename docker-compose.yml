@@ -1,0 +1,18 @@
+services:
+  skinanator:
+    build: .
+    image: skinanator:latest
+    container_name: skinanator
+    restart: unless-stopped
+    # Publish on all host interfaces so other devices on your LAN can reach it
+    # at http://<this-machine-name-or-ip>:${PORT}. Override the host port with
+    # the PORT env var, e.g. `PORT=8080 docker compose up`.
+    ports:
+      - "${PORT:-5000}:5000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=5000
+    # Persist saved skins + custom catalog across container rebuilds.
+    volumes:
+      - ./catalog:/app/catalog
+      - ./skins:/app/skins

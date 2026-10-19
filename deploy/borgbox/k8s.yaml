@@ -1,0 +1,154 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: skinanator
+  labels:
+    pod-security.kubernetes.io/enforce: baseline
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: skins
+  namespace: skinanator
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: catalog
+  namespace: skinanator
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: skinanator
+  namespace: skinanator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: skinanator
+  template:
+    metadata:
+      labels:
+        app: skinanator
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: borgbox.dev/state
+                    operator: In
+                    values: ["true"]
+      containers:
+        - name: skinanator
+          image: registry.platform.svc.cluster.local:5000/skinanator:cluster
+          env:
+            - name: HOST
+              value: 0.0.0.0
+            - name: PORT
+              value: "5000"
+          ports:
+            - name: http
+              containerPort: 5000
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          volumeMounts:
+            - name: skins
+              mountPath: /app/skins
+            - name: catalog
+              mountPath: /app/catalog
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+      volumes:
+        - name: skins
+          persistentVolumeClaim:
+            claimName: skins
+        - name: catalog
+          persistentVolumeClaim:
+            claimName: catalog
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: skinanator
+  namespace: skinanator
+spec:
+  type: ClusterIP
+  selector:
+    app: skinanator
+  ports:
+    - name: http
+      port: 5000
+      targetPort: http
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: skinanator-home-arpa
+  namespace: skinanator
+spec:
+  secretName: skinanator-tls
+  dnsNames:
+    - skinanator.home.arpa
+  issuerRef:
+    name: home-arpa
+    kind: ClusterIssuer
+    group: cert-manager.io
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: lan-only
+  namespace: skinanator
+spec:
+  ipAllowList:
+    sourceRange:
+      - 192.168.8.0/24
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: skinanator
+  namespace: skinanator
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.middlewares: skinanator-lan-only@kubernetescrd
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - skinanator.home.arpa
+      secretName: skinanator-tls
+  rules:
+    - host: skinanator.home.arpa
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: skinanator
+                port:
+                  name: http
