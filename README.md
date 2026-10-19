@@ -101,13 +101,24 @@ legs and their overlays wrap onto the model as you paint.
 
 ## Export & import
 
-- **Export & Download PNG** — validates the image server-side (dimensions must be
-  64x32 or 64x64, saved as RGBA PNG), writes a copy into `skins/`, and downloads
-  it to your browser. Exports are written as a **maximally-compatible PNG**
-  (IHDR/IDAT/IEND only, 8-bit RGBA, non-interlaced, filter type 0) so strict
-  importers — notably the **Amazon Fire tablet / Android edition** — accept them.
-  Stricter decoders can fail to decode an optimized PNG and report a misleading
-  "must be 64x64" error even when the image really is 64x64.
+Pick an export **Format** in the File panel:
+
+- **.mcpack (default)** — a Bedrock **skin pack**. On most devices you just open
+  the downloaded file and Minecraft imports the skin into your **Owned** skins —
+  no manual Dressing Room import needed. Choose the **Model** (Classic 4px arms
+  or Slim/Alex 3px arms); this sets the pack's geometry
+  (`geometry.humanoid.custom` vs `geometry.humanoid.customSlim`). The pack
+  contains a `manifest.json` (with unique header/module UUIDs), `skins.json`,
+  `texts/` localization, and the skin PNG.
+- **.png (texture only)** — the bare skin texture. Import it manually via
+  **Dressing Room → Skins → Owned → Import**, then pick classic/slim.
+
+Both formats embed a **maximally-compatible PNG** (IHDR/IDAT/IEND only, 8-bit
+RGBA, non-interlaced, filter type 0) so strict importers — notably the **Amazon
+Fire tablet / Android edition** — accept them. Stricter decoders can fail to
+decode an optimized PNG and report a misleading "must be 64x64" error even when
+the image really is 64x64. Every export is also saved into `skins/`.
+
 - **Import PNG** — load an existing Bedrock skin PNG to keep editing it. The
   layout is detected automatically.
 
@@ -144,19 +155,25 @@ To regenerate or extend the example presets, edit the `PRESETS` list in
 
 ## Loading the skin into Minecraft Bedrock
 
-1. Export the PNG from Skinanator.
-2. In Minecraft Bedrock, open the **Dressing Room** (the character/hanger icon
-   on the main menu or in-game profile).
-3. Go to **Skins → Owned → Import** (the "+" / Import slot).
-4. Select your exported `.png`.
-5. Choose the model type:
-   - **Classic** for the standard 4px-wide arms.
-   - **Slim (Alex)** for 3px-wide arms.
-   The UV map in this editor targets the classic model.
-6. Confirm to apply.
+### Easiest: .mcpack (default)
 
-The exported file is a plain skin texture — no `.mcpack` needed for standard
-humanoid skins.
+1. In the File panel choose **Format: .mcpack** (the default) and the **Model**
+   (Classic or Slim), then click **Export & Download .mcpack**.
+2. Get the `.mcpack` onto the device (USB stick, download, cloud, etc.).
+3. Open/tap the `.mcpack` file. Minecraft launches and imports it, adding the
+   skin to your **Owned** skins.
+4. Open the **Dressing Room → Skins → Owned** and select it.
+
+### Alternative: .png texture
+
+1. Choose **Format: .png** and export.
+2. In Minecraft Bedrock open the **Dressing Room** (character/hanger icon).
+3. Go to **Skins → Owned → Import** (the "+" / Import slot) and select the file.
+4. Choose the model type (**Classic** 4px arms or **Slim/Alex** 3px arms).
+5. Confirm to apply.
+
+The UV map in this editor targets the classic model; slim works too but note the
+3px arm width.
 
 ## Project layout
 
@@ -183,8 +200,8 @@ skins/                 Exported skins are saved here
 - The 3D preview is a lightweight software renderer (affine-textured cuboids with
   painter's-algorithm sorting). It approximates the in-game look but isn't a
   pixel-perfect GPU render.
-- Custom (non-humanoid) geometry via `.mcpack` is out of scope; this tool
-  produces standard humanoid skin textures.
+- The `.mcpack` export uses the standard humanoid geometry (classic/slim).
+  Custom (non-humanoid) geometry models are out of scope.
 - For slim (Alex) arms the arm width is 3px instead of 4px; the current guides
   use the classic 4px layout. Painting still works, but keep slim arm columns in
   mind if targeting the Alex model.

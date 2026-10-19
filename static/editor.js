@@ -235,12 +235,27 @@
     el.className = "status " + (kind || "");
   }
 
+  // The model (classic/slim) only matters for .mcpack geometry; hide it for PNG.
+  function updateExportControls() {
+    const fmt = $("exportFormat").value;
+    $("modelRow").style.display = fmt === "mcpack" ? "" : "none";
+    $("export").textContent =
+      fmt === "mcpack" ? "Export & Download .mcpack" : "Export & Download PNG";
+  }
+
   async function exportSkin() {
     try {
+      const format = $("exportFormat").value;   // "mcpack" | "png"
+      const model = $("exportModel").value;     // "classic" | "slim"
       const res = await fetch("/api/export", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: dataURL(), name: $("name").value }),
+        body: JSON.stringify({
+          image: dataURL(),
+          name: $("name").value,
+          format,
+          model,
+        }),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -251,12 +266,12 @@
       const saved = res.headers.get("X-Saved-Path");
       const cd = res.headers.get("Content-Disposition") || "";
       const m = cd.match(/filename="?([^"]+)"?/);
-      const fname = m ? m[1] : "skin.png";
+      const fname = m ? m[1] : (format === "png" ? "skin.png" : "skin.mcpack");
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url; a.download = fname; a.click();
       URL.revokeObjectURL(url);
-      setStatus("Exported. Saved to " + (saved || "skins/"), "ok");
+      setStatus("Exported " + fname + ". Saved to " + (saved || "skins/"), "ok");
     } catch (e) {
       setStatus("Export error: " + e.message, "err");
     }
@@ -518,6 +533,7 @@
     });
     $("fillBase").addEventListener("click", fillBase);
     $("export").addEventListener("click", exportSkin);
+    $("exportFormat").addEventListener("change", updateExportControls);
     $("saveCatalog").addEventListener("click", saveToCatalog);
     $("import").addEventListener("change", (e) => {
       if (e.target.files[0]) importSkin(e.target.files[0]);
@@ -567,6 +583,7 @@
   // ---- init ---------------------------------------------------------------
   buildSwatches();
   bind();
+  updateExportControls();
   resizeBuffer(false);
   loadCatalog();
   setStatus("Ready. Paint a skin, load an example, or import a PNG.", "");

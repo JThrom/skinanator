@@ -74,7 +74,21 @@
         <span>Name</span>
         <input type="text" id="name" value="myskin" />
       </label>
-      <button id="export" class="primary">Export &amp; Download PNG</button>
+      <label class="row">
+        <span>Format</span>
+        <select id="exportFormat">
+          <option value="mcpack" selected>.mcpack (skin pack)</option>
+          <option value="png">.png (texture only)</option>
+        </select>
+      </label>
+      <label class="row" id="modelRow">
+        <span>Model</span>
+        <select id="exportModel">
+          <option value="classic" selected>Classic (4px arms)</option>
+          <option value="slim">Slim / Alex (3px arms)</option>
+        </select>
+      </label>
+      <button id="export" class="primary">Export &amp; Download</button>
       <button id="saveCatalog">Save to Catalog</button>
       <label class="filebtn">
         Import PNG
@@ -96,9 +110,10 @@
 
       <h2>Bedrock how-to</h2>
       <ol class="hint">
-        <li>Export the PNG.</li>
-        <li>In Minecraft Bedrock: <b>Dressing Room &rarr; Skins &rarr; Owned &rarr; Import</b>.</li>
-        <li>Select the exported file, pick classic/slim, confirm.</li>
+        <li><b>.mcpack</b> (easiest): export, then just open the file on the
+          device &mdash; Minecraft imports it into <b>Owned</b> skins.</li>
+        <li><b>.png</b>: in Minecraft go to <b>Dressing Room &rarr; Skins &rarr;
+          Owned &rarr; Import</b>, select the file, pick classic/slim, confirm.</li>
       </ol>
     </aside>
   </div>

@@ -20,6 +20,7 @@ import os
 import re
 import struct
 import uuid
+import zipfile
 import zlib
 from datetime import datetime
 
@@ -118,6 +119,83 @@ def skin_png_bytes(img: Image.Image) -> bytes:
     return sig + _chunk(b"IHDR", ihdr) + _chunk(b"IDAT", comp) + _chunk(b"IEND", b"")
 
 
+def skin_mcpack_bytes(png: bytes, name: str, model: str = "classic") -> bytes:
+    """
+    Build a valid Bedrock skin pack (.mcpack) zip around a skin PNG.
+
+    A skin pack is a zip containing:
+      - manifest.json : pack metadata with a "skin_pack" module (two UUIDs)
+      - skins.json    : maps the texture to a geometry + a localization key
+      - texts/en_US.lang + texts/languages.json : display names
+      - <texture>.png : the skin image
+
+    `model` selects the body geometry:
+      - "classic" -> geometry.humanoid.custom      (4px arms, Steve)
+      - "slim"    -> geometry.humanoid.customSlim   (3px arms, Alex)
+
+    Importing the .mcpack adds the skin to the player's owned skins so it can be
+    selected from the Dressing Room.
+    """
+    display = (name or "Custom Skin").strip() or "Custom Skin"
+    texture_file = "skin.png"
+    geometry = (
+        "geometry.humanoid.customSlim"
+        if str(model).lower() == "slim"
+        else "geometry.humanoid.custom"
+    )
+
+    header_uuid = str(uuid.uuid4())
+    module_uuid = str(uuid.uuid4())
+
+    manifest = {
+        "format_version": 2,
+        "header": {
+            "name": f"{display} Skin Pack",
+            "description": f"{display} - made with Skinanator",
+            "uuid": header_uuid,
+            "version": [1, 0, 0],
+            "min_engine_version": [1, 16, 0],
+        },
+        "modules": [
+            {
+                "type": "skin_pack",
+                "uuid": module_uuid,
+                "version": [1, 0, 0],
+            }
+        ],
+    }
+
+    # The localization key ties skins.json -> the display name in en_US.lang.
+    loc_key = "skin.1"
+    skins = {
+        "skins": [
+            {
+                "localization_name": "1",
+                "geometry": geometry,
+                "texture": texture_file,
+                "type": "free",
+            }
+        ],
+        "serialize_name": display,
+        "localization_name": display,
+    }
+
+    # skinpack.<serialize_name>.name  and  skin.<serialize_name>.<localization_name>
+    lang_lines = (
+        f"skinpack.{display}={display} Skin Pack\n"
+        f"skin.{display}.1={display}\n"
+    )
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("manifest.json", json.dumps(manifest, indent=2))
+        zf.writestr("skins.json", json.dumps(skins, indent=2))
+        zf.writestr("texts/languages.json", json.dumps(["en_US"]))
+        zf.writestr("texts/en_US.lang", lang_lines)
+        zf.writestr(texture_file, png)
+    return buf.getvalue()
+
+
 def _safe_name(name: str) -> str:
     name = (name or "").strip() or "skin"
     name = re.sub(r"[^A-Za-z0-9_\-]", "_", name)
@@ -204,8 +282,17 @@ def validate():
 @app.route("/api/export", methods=["POST"])
 def export():
     """
-    Validate + save a skin to disk and return it as a downloadable PNG.
-    The saved file is a valid Bedrock skin ready to import into a profile.
+    Validate + save a skin to disk and return it as a download.
+
+    Request JSON:
+      image  : data-URL PNG of the skin (required)
+      name   : base file name (optional)
+      format : "mcpack" (default) or "png"
+      model  : "classic" (default) or "slim" (only used for .mcpack geometry)
+
+    - "png"    -> a maximally-compatible bare skin texture PNG.
+    - "mcpack" -> a Bedrock skin pack that imports into the player's owned skins.
+    Both the texture PNG and the pack are also saved under skins/.
     """
     payload = request.get_json(silent=True) or {}
     try:
@@ -213,19 +300,37 @@ def export():
     except ValueError as exc:
         return jsonify({"ok": False, "error": str(exc)}), 400
 
+    fmt = str(payload.get("format", "mcpack")).lower()
+    model = str(payload.get("model", "classic")).lower()
     name = _safe_name(payload.get("name", ""))
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    filename = f"{name}-{stamp}.png"
-    path = os.path.join(SKINS_DIR, filename)
 
-    # Write a maximally-compatible PNG so strict importers (Fire/Android) accept it.
+    # Always produce the strict-safe PNG; it's the texture for either format.
     png = skin_png_bytes(img)
-    with open(path, "wb") as fh:
-        fh.write(png)
 
+    if fmt == "png":
+        filename = f"{name}-{stamp}.png"
+        path = os.path.join(SKINS_DIR, filename)
+        with open(path, "wb") as fh:
+            fh.write(png)
+        resp = send_file(
+            io.BytesIO(png),
+            mimetype="image/png",
+            as_attachment=True,
+            download_name=filename,
+        )
+        resp.headers["X-Saved-Path"] = path
+        return resp
+
+    # Default: .mcpack skin pack.
+    pack = skin_mcpack_bytes(png, payload.get("name", "") or name, model=model)
+    filename = f"{name}-{stamp}.mcpack"
+    path = os.path.join(SKINS_DIR, filename)
+    with open(path, "wb") as fh:
+        fh.write(pack)
     resp = send_file(
-        io.BytesIO(png),
-        mimetype="image/png",
+        io.BytesIO(pack),
+        mimetype="application/zip",
         as_attachment=True,
         download_name=filename,
     )
